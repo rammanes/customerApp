@@ -1,16 +1,12 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:klik/main/extensions/NumExtension.dart';
-import 'package:klik/main/extensions/WidgetExtension.dart';
 import 'package:klik/main/utils/AppColors.dart';
-import 'package:klik/screens/KADashboardScreen.dart';
 import 'package:klik/screens/login/KALoginScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../main/utils/AppConstant.dart';
+import 'main_page.dart';
 
 
 
@@ -107,7 +103,7 @@ class _KASplashScreenState extends State<KASplashScreen> {
   void checkUser() async {
     if(userId !=null && token !=null){
       timer = Timer(const Duration(milliseconds: 2200),(){
-        Route route = MaterialPageRoute(builder: (context) => KADashboardScreen());
+        Route route = MaterialPageRoute(builder: (context) => MainPage());
         Navigator.pushReplacement(context, route);
       });
     }else{

@@ -15,8 +15,15 @@ class KlikApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers:[
+        ChangeNotifierProvider.value(value: ManagePassword()),
         ChangeNotifierProvider(create: (_) => LoginProvider()),
         ChangeNotifierProvider(create: (_) => DashboardProvider()),
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => PinProvider()),
+        ChangeNotifierProvider(create: (_) => PaymentProvider()),
+        ChangeNotifierProvider(create: (_) => CardLimitProvider()),
+        ChangeNotifierProvider(create: (_) => RefProvider()),
+        ChangeNotifierProvider(create: (_) => ChangePinProvider())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

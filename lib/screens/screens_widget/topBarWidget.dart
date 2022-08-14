@@ -2,6 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:klik/main/extensions/NumExtension.dart';
 import 'package:klik/main/utils/AppColors.dart';
+import 'package:klik/screens/screens_widget/app_large_text.dart';
+import 'package:klik/screens/screens_widget/colors.dart';
 
 
 
@@ -17,39 +19,31 @@ class TopBarWidget extends StatelessWidget implements PreferredSizeWidget{
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             buildAppMerchant(),
-            buildAppProfileAvatar()
+            buildAppProfileAvatar("assets/images/beard.png")
           ],
         ),
       )
     );
   }
-  Widget buildAppProfileAvatar() => Container(
-    height: 60,
-    width: 60,
+  Widget buildAppProfileAvatar(String imageUrl) => Container(
+    height: 50,
+    width: 50,
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(30),
-      boxShadow: const [
-        BoxShadow(
-          color: appTextColorSecondary,
-        )
-      ]
+      shape: BoxShape.circle
     ),
+    child: imageUrl.isEmpty? Container(): Image.asset(imageUrl, height: 40, width: 40,) ,
   );
 
   Widget buildAppMerchant() {
     return Row(
       children: [
-        buildAppProfileAvatar(),
+        buildAppProfileAvatar('assets/images/merchantLogo.png'),
         12.width,
         buildText(),
       ],
     );
   }
-  Widget buildText() => const Text("MERCHANT", style: TextStyle(
-    fontSize: 18,
-    fontWeight: FontWeight.w500,
-    color: appUIDarker
-  ),);
+  Widget buildText() => AppLargeText(text: "AARANO", size: 20, color: AppColor.appMainColor,);
   @override
   // TODO: implement preferredSize
   Size get preferredSize => Size.fromHeight(100);

@@ -1,311 +1,404 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:intl/intl.dart';
 import 'package:klik/main/extensions/NumExtension.dart';
 import 'package:klik/main/extensions/WidgetExtension.dart';
 import 'package:klik/main/models/WAModel.dart';
 import 'package:klik/main/provider/WADataProvider.dart';
 import 'package:klik/main/provider/appProvider.dart';
 import 'package:klik/main/utils/AppColors.dart';
-import 'package:klik/main/utils/AppConstant.dart';
-import 'package:klik/main/utils/AppUtils.dart';
-import 'package:klik/screens/KAPayOptions.dart';
 import 'package:klik/screens/KATopUpScreen.dart';
 import 'package:klik/screens/KATransactionsScreen.dart';
-import 'package:klik/screens/screens_widget/summaryWidget.dart';
+import 'package:klik/screens/pin_module/generate_pin_page.dart';
 import 'package:klik/screens/screens_widget/topBarWidget.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'KAGeneratePinScreen.dart';
-import 'login/model/loginResonseModel.dart';
-
-
+import 'KAManageCardScreen.dart';
+import 'screens_widget/appText.dart';
+import 'screens_widget/app_large_text.dart';
+import 'screens_widget/category_card.dart';
+import 'screens_widget/colors.dart';
+import 'screens_widget/trans_widget.dart';
 
 class KAHomeScreen extends StatefulWidget {
-
   @override
   _KAHomeScreenState createState() => _KAHomeScreenState();
 }
 
 class _KAHomeScreenState extends State<KAHomeScreen> {
   List<Transactions> transactionList = [];
-  String? userToken;
-  SharedPreferences? preferences;
+  String? userProfileType;
+  bool isEvenDefault = false;
+  late StreamSubscription internetSubscription;
 
-  Future init() async {
-    preferences = await SharedPreferences.getInstance();
-    String? userToken = preferences!.getString("token");
-    if (userToken == null) return;
-    setState(() => this.userToken = userToken);
+  getUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userProfileType = prefs.getString("profileType");
+    });
   }
-
+  Future _refresh() async{
+    setState((){});
+  }
+  bool hasInternet = false;
   @override
   void initState() {
-    super.initState();
-    init();
+    internetSubscription = InternetConnectionChecker().onStatusChange.listen((event) {
+      final hasInternet = event ==InternetConnectionStatus.connected;
+      setState(()=> this.hasInternet= hasInternet);
+    });
     transactionList = getTransactions();
-    final dashboardData = Provider.of<DashboardProvider>(context, listen: false);
-    dashboardData.dashboardProvider();
+    getUser();
+    super.initState();
   }
 
   @override
+  void dispose(){
+    internetSubscription.cancel();
+    super.dispose();
+  }
+  @override
   Widget build(BuildContext context) {
-    final dashboardData = Provider.of<DashboardProvider>(context);
+    final height = MediaQuery.of(context).size.height;
+    final width = MediaQuery.of(context).size.width;
+    final dashboardData =
+        Provider.of<DashboardProvider>(context, listen: false);
     dashboardData.dashboardProvider();
-    return Scaffold(
-        appBar: TopBarWidget(),
-
-        body: dashboardData.userData!.profileDetails.name.isEmpty? CircularProgressIndicator():
-        Center(
-            child: Text(dashboardData.userData!.profileDetails.name, style: TextStyle(color: appLandingScreen, fontSize: 32 ),))
+    // print(userProfileType);
+    return RefreshIndicator(
+      onRefresh: _refresh,
+      child: Scaffold(
+        backgroundColor: Colors.grey.withOpacity(0.2),
+        body:hasInternet? Consumer<DashboardProvider>(builder: (context, data, child) {
+        return data.isLoading
+            ? Center(
+                child: Container(
+                  child: SpinKitThreeBounce(
+                    itemBuilder: (BuildContext context, int index) {
+                      return DecoratedBox(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          color: index.isEven ? Colors.red : Colors.green,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              )
+        : ListView(
+          scrollDirection: Axis.vertical,
+          children: [
+            Container(
+              padding: const EdgeInsets.only(left: 20, top: 50, right: 20),
+              child: Row(
+                children: [
+                  Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Image.asset("assets/images/beard.png"),
+                  ),
+                  const SizedBox(width: 15,),
+                  Text(data.userDate!.merchant.name, style: const TextStyle(
+                    fontSize: 19
+                  ),)
+                ],
+              ),
+            ),
+            Container(
+              margin:
+                  const EdgeInsets.only(left: 20, right: 20, top: 40),
+              child: AppText(
+                text:
+                    "Welcome, ${dashboardData.userDate!.profileDetails.name}",
+                color: AppColor.appMainColor,
+              ),
+            ),
+            const SizedBox(
+              height: 15,
+            ),
+            Container(
+              margin: const EdgeInsets.only(left: 20, right: 20),
+              padding: const EdgeInsets.only(left: 50, top: 30),
+              height: 120,
+              decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(15),
+                      topRight: Radius.circular(15),
+                      bottomLeft: Radius.circular(0),
+                      bottomRight: Radius.circular(15)),
+                  color: AppColor.appBlue),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppText(
+                    text: "Available Balance",
+                    color: AppColor.appWhite,
+                    size: 18,
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  AppLargeText(
+                    text:
+                        "NGN ${dashboardData.userDate!.profileDetails.balance.toString()}. 00",
+                    color: AppColor.appWhite,
+                    size: 22,
+                  )
+                ],
+              ),
+            ),
+            const SizedBox(height: 15),
+            newCardSection(userProfileType!),
+            //buildCardWidget(userProfileType!),
+            25.height,
+            recentTransWidget(),
+            15.height,
+            transactionListWidget(),
+          ],
+        );
+      }): const AlertDialog(
+          content: Text("No internet"),
+        ),)
     );
   }
 
-  Widget buildSummaryWidget(String name) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Text(
-                '$welcomeText $name !',
-                style: const TextStyle(fontSize: 14, color: deepBlue),
-              ),
-            ),
-            20.height,
-            buildBalanceWidget(context),
-          ],
-        ),
-      );
-
-  Widget buildBalanceWidget(BuildContext context) => Container(
-        height: Utility(context).height * 0.065,
-        child: Stack(
-          children: [
-            const Positioned(
-              top: 20,
-              child: Text(
-                balanceText,
-                style: TextStyle(fontSize: 14, color: appTextColorSecondary),
-              ),
-            ),
-            const Positioned(
-              top: 10,
-              left: 80,
-              child: Text(
-                "NGN",
-                style: TextStyle(
-                    fontSize: 24, color: deepBlue, fontWeight: FontWeight.w500),
-              ),
-            ),
-            Positioned(
-              top: 12,
-              left: 140,
-              child: RichText(
-                text: const TextSpan(
-                    text: "2,000",
-                    style: TextStyle(
-                        fontSize: 36,
-                        color: deepBlue,
-                        fontWeight: FontWeight.w500),
-                    children: <TextSpan>[
-                      TextSpan(
-                        text: ".00",
-                        style: TextStyle(
-                            fontSize: 30,
-                            color: deepBlue,
-                            fontWeight: FontWeight.w500),
-                      )
-                    ]),
-              ),
-            ),
-          ],
-        ),
-      );
-
-  Widget buildCardWidget() => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                KAPayOptions().launch(context);
-              },
-              child: Container(
-                child: Image.asset(
-                  'assets/images/icons/manageKd.png',
-                  height: 130,
-                  width: 150,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                KATopUpScreen().launch(context);
-              },
-              child: Container(
-                child: Image.asset(
-                  'assets/images/icons/topUp.png',
-                  height: 130,
-                  width: 150,
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: InkWell(
-              onTap: () {
-                KAGeneratePinScreen().launch(context);
-              },
-              child: Container(
-                child: Image.asset(
-                  'assets/images/icons/generatePin.png',
-                  height: 130,
-                  width: 150,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-
-  Widget recentTransWidget() => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 25),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(recentTransaction,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: deepBlue)),
-                GestureDetector(
-                  onTap: () {
-                    KATransactionsScreen().launch(context);
-                  },
-                  child: const Text(seeAll,
-                      style: TextStyle(
-                          fontSize: 16, color: appTextColorSecondary)),
-                ),
-              ],
-            ),
-            20.height,
-          ],
-        ),
-      );
-
-  Widget transactionListWidget() => Container(
-        child: SingleChildScrollView(
-            child: ListView.separated(
-                shrinkWrap: true,
-                itemBuilder: (BuildContext context, int index) =>
-                    GestureDetector(
-                      onTap: () {},
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 25),
+  Widget newCardSection(String profileType) => Container(
+      margin: const EdgeInsets.fromLTRB(20, 5, 20, 10),
+      height: 120,
+      width: double.infinity,
+      child: Card(
+        elevation: 3,
+        color: Colors.purple,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: profileType.isEmpty
+            ? CircularProgressIndicator()
+            : isOrganization(profileType)
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          KAManageCardScreen().launch(context);
+                        },
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Container(
-                                  child: Row(
-                                    children: [
-                                      isCredit(
-                                              '${transactionList[index].transType!}')
-                                          ? Icon(
-                                              Icons.add,
-                                              size: 10,
-                                              color: appGreenColor,
-                                            )
-                                          : Icon(
-                                              Icons.remove,
-                                              size: 10,
-                                              color: appRedColor,
-                                            ),
-                                      Text(
-                                        'NGN ${transactionList[index].amount!}',
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: isCredit(
-                                                    '${transactionList[index].transType!}')
-                                                ? appGreenColor
-                                                : appRedColor),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Container(
-                                    padding: EdgeInsets.only(left: 35),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        Text(
-                                          transactionList[index].date!,
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  alignment: Alignment.centerLeft,
-                                  child: Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceAround,
-                                    children: [
-                                      Text(
-                                        transactionList[index].status!,
-                                        textAlign: TextAlign.left,
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            color: isSuccessful(
-                                                    '${transactionList[index].status!}')
-                                                ? appGreenColor
-                                                : appRedColor),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.credit_card,
+                              color: appWhite,
                             ),
-                            8.height,
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.location_on,
-                                  size: 15,
-                                ),
-                                8.width,
-                                Text(
-                                  transactionList[index].location!,
-                                  style: const TextStyle(fontSize: 10),
-                                ),
-                              ],
+                            SizedBox(
+                              height: 10,
                             ),
+                            Text(
+                              "Manage Card",
+                              style: TextStyle(fontSize: 14, color: appWhite),
+                            )
                           ],
                         ),
                       ),
-                    ),
-                separatorBuilder: (context, index) => const Divider(
-                      color: Colors.transparent,
-                    ),
-                itemCount: transactionList.length)),
+                      const VerticalDivider(
+                        thickness: 1,
+                        indent: 40.0,
+                        endIndent: 40.0,
+                        color: appWhite,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          KATopUpScreen().launch(context);
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.add_to_home_screen,
+                              color: appWhite,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Top Up",
+                              style: TextStyle(
+                                  fontSize: 14, color: appWhite),
+                            )
+                          ],
+                        ),
+                      ),
+                      const VerticalDivider(
+                        thickness: 1,
+                        indent: 40.0,
+                        endIndent: 40.0,
+                        color: appWhite,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          KAGeneratePinScreen().launch(context);
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.qr_code_sharp,
+                              color: appWhite,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Generate Voucher",
+                              style: TextStyle(fontSize: 14, color: appWhite),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          KAManageCardScreen().launch(context);
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.credit_card,
+                              color: appWhite,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Manage Card",
+                              style: TextStyle(fontSize: 14, color: appWhite),
+                            )
+                          ],
+                        ),
+                      ),
+                      const VerticalDivider(
+                        thickness: 1,
+                        indent: 40.0,
+                        endIndent: 40.0,
+                        color: appWhite,
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          KATopUpScreen().launch(context);
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.add_to_home_screen,
+                              color: appWhite,
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              "Top Up",
+                              style: TextStyle(fontSize: 14, color: appWhite),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+      ));
+
+  Widget recentTransWidget() => Container(
+        margin: const EdgeInsets.only(left: 20, right: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            AppLargeText(
+              text: "Recent Transactions",
+              size: 18,
+              color: AppColor.appMainColor,
+            ),
+            InkWell(
+              onTap: (){
+                KATransactionsScreen().launch(context);
+              },
+              child: AppText(
+                text: "See all",
+                color: Colors.purpleAccent,
+              ),
+            )
+          ],
+        ),
       );
+
+  Widget transactionListWidget() {
+    final transProv = Provider.of<TransactionProvider>(context, listen: false);
+    transProv.transProvider();
+    var formattedDate = DateFormat('EEEE, MMM d, yyyy  hh:mm:ss');
+    return Consumer<TransactionProvider>(
+      builder: (context, data, child) {
+        return data.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Column(children: [
+                ListView.builder(
+                  shrinkWrap: true,
+                  scrollDirection: Axis.vertical,
+                  itemBuilder: (context, index) => InkWell(
+                    onTap: () {},
+                    child: Column(
+                      children: [
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        TransWidget(
+                          fontColor: appTextColorSecondary,
+                          date: formattedDate
+                              .format(transProv.trans!.data[index].createdAt),
+                          amount:
+                              "NGN ${transProv.trans!.data[index].amount.toString()}",
+                          color: Colors.green,
+                          location: transProv.trans!.data[index].location,
+                        ),
+                      ],
+                    ),
+                  ),
+                  itemCount: transProv.trans!.data.length,
+                ),
+              ]);
+      },
+    );
+  }
 
   bool isCredit(String transStatus) => transStatus.toLowerCase() == 'credit';
 
   bool isSuccessful(String transStatus) =>
       transStatus.toLowerCase() == 'successful';
+
+  bool isOrganization(String profileType) {
+    return profileType.toLowerCase() == 'organization'; //ORGANIZATION
+  }
+
+  currency(context) {
+    Locale locale = Localizations.localeOf(context);
+    var format =
+        NumberFormat.simpleCurrency(locale: Platform.localeName, name: 'NGN');
+    return format;
+  }
 }

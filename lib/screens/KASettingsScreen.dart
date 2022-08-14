@@ -44,6 +44,7 @@ class _KASettingsScreenState extends State<KASettingsScreen> {
                 preferences= await SharedPreferences.getInstance();
                 preferences!.remove("userId");
                 preferences!.remove("token");
+                preferences!.remove("profileType");
                 Route route = MaterialPageRoute(builder: (context) => KALoginScreen());
                 Navigator.pushReplacement(context, route);
               },

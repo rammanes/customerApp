@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:klik/main/extensions/NumExtension.dart';
 import 'package:klik/main/extensions/WidgetExtension.dart';
 import 'package:klik/screens/KAChangePinScreen.dart';
+import 'package:klik/screens/customer_cart.dart';
 import 'package:klik/screens/screens_widget/generalTopBar.dart';
+import 'package:klik/screens/transaction_limit.dart';
 
 import '../main/utils/AppColors.dart';
 
@@ -14,6 +16,8 @@ class KAManageCardScreen extends StatefulWidget {
 }
 
 class _KAManageCardScreenState extends State<KAManageCardScreen> {
+  String changePinPage = "changepin";
+  String setLimitPage = "setlimit";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,9 +30,11 @@ class _KAManageCardScreenState extends State<KAManageCardScreen> {
             buildManageCardWidget(),
             15.height,
             InkWell(
-              onTap: (){KAChangePinScreen().launch(context);},
+              onTap: (){UserCard(pageTag: changePinPage).launch(context);},
               child: buildSettingsItems('assets/images/icons/changePin.png')),
-            buildSettingsItems('assets/images/icons/setLimit.png'),
+            InkWell(
+              onTap: (){UserCard(pageTag: setLimitPage).launch(context);},
+              child: buildSettingsItems('assets/images/icons/setLimit.png')),
           ],
         ),
       ),

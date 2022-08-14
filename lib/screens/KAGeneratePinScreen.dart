@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:klik/main/extensions/NumExtension.dart';
 import 'package:klik/main/extensions/WidgetExtension.dart';
+import 'package:klik/main/models/pinModel.dart';
+import 'package:klik/main/provider/appProvider.dart';
 import 'package:klik/screens/screens_widget/backScreenWidget.dart';
 import 'package:klik/screens/screens_widget/generalTopBar.dart';
+import 'package:provider/provider.dart';
 
 import '../main/utils/AppColors.dart';
 import '../main/utils/AppWidget.dart';
@@ -19,6 +23,7 @@ class _KAGeneratePinScreenState extends State<KAGeneratePinScreen> {
 
   TextEditingController _amntPerPin = TextEditingController();
   TextEditingController _noOfPin = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   bool _showPassword = false;
   List<String> categories = [
@@ -33,7 +38,21 @@ class _KAGeneratePinScreenState extends State<KAGeneratePinScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: BackTopBar(),
-      body: Stack(
+      body: Consumer<PinProvider>(builder: (context, data, child){
+        return data.isLoading?Center(
+          child: Container(
+            child: SpinKitThreeBounce(
+              itemBuilder: (BuildContext context, int index) {
+                return DecoratedBox(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15),
+                    color: index.isEven ? Colors.red : Colors.green,
+                  ),
+                );
+              },
+            ),
+          ),
+        ):Stack(
         children: [
           Align(
             alignment: Alignment.topCenter,
@@ -69,7 +88,7 @@ class _KAGeneratePinScreenState extends State<KAGeneratePinScreen> {
             child: buildGeneratePinButton(),
           )
         ],
-      ),
+      );}),
     );
   }
   Widget buildGeneratePinWidget() => const Text("Generate Pin", textAlign: TextAlign.center, style: TextStyle(
@@ -77,33 +96,33 @@ class _KAGeneratePinScreenState extends State<KAGeneratePinScreen> {
       fontWeight: FontWeight.w600,
       color: appLandingScreen
   ),);
-
-  Widget buildReusableTextField(TextEditingController controller, String hintText, String topText) =>  Column(
-    mainAxisAlignment: MainAxisAlignment.start,
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        padding: const EdgeInsets.only(top: 25),
-        child: Text(topText, style: const TextStyle(
-            fontWeight: FontWeight.w500,
-            color: appLandingScreen
-        ),),
-      ),
-      Container(
-          padding: EdgeInsets.fromLTRB(0,16,0, MediaQuery.of(context).viewInsets.bottom),
-          child: shadowPasswordField(controller, hintText, _showPassword, (){
-            setState((){
-              _showPassword = !_showPassword;
-            });
-          })
-      ),
-    ],
-  );
+  //
+  // Widget buildReusableTextField(TextEditingController controller, String hintText, String topText) =>  Column(
+  //   mainAxisAlignment: MainAxisAlignment.start,
+  //   crossAxisAlignment: CrossAxisAlignment.start,
+  //   children: [
+  //     Container(
+  //       padding: const EdgeInsets.only(top: 25),
+  //       child: Text(topText, style: const TextStyle(
+  //           fontWeight: FontWeight.w500,
+  //           color: appLandingScreen
+  //       ),),
+  //     ),
+  //     Container(
+  //         padding: EdgeInsets.fromLTRB(0,16,0, MediaQuery.of(context).viewInsets.bottom),
+  //         child: shadowPasswordField(controller, hintText, _showPassword, (){
+  //           setState((){
+  //             _showPassword = !_showPassword;
+  //           });
+  //         })
+  //     ),
+  //   ],
+  // );
 
   Widget  buildGeneratePinButton() =>  Container(
     alignment: Alignment.bottomCenter,
     padding: const EdgeInsets.only(top: 45, bottom: 45),
-    child: raisedButton(() => KAPinGeneratedScreen().launch(context), 'Generate', 200, 50),
+    child: raisedButton(() => onClickGeneratePin(), 'Generate', 200, 50),
   );
 
   Widget buildDropDownSection() => Container(
@@ -184,4 +203,45 @@ class _KAGeneratePinScreenState extends State<KAGeneratePinScreen> {
       ],
     ),
   );
+
+  onClickGeneratePin(){
+    checkInputs();
+  }
+  void checkInputs(){
+    String amount = _amntPerPin.text.toString();
+    String pinNumber = _noOfPin.text.toString();
+    if(amount.isEmpty){
+      alertDialog("Please enter a valid amount");
+    }else if(pinNumber.isEmpty){
+      alertDialog("Please the number of pins");
+    }else{
+      generatePin();
+    }
+  }
+  alertDialog(String message){
+    showDialog(
+        context: context,
+        builder: (context){
+          return AlertDialog(
+            // title: Text("Pin"),
+            content: Text(message),
+          );
+        }
+    ); //end showDialog()
+  }
+
+  void generatePin() async {
+    int amount = int.parse( _amntPerPin.text.toString());
+    int pinNumber = int.parse( _noOfPin.text.toString());
+    List<Pin> pinList;
+    String product = selectedCategories;
+    var pinProv = Provider.of<PinProvider>(context, listen: false);
+    await pinProv.pinProvider(pinNumber, amount, product);
+    if(pinProv.isBack){
+      pinList = pinProv.pinModel!;
+      KAPinGeneratedScreen(getPinList : pinList).launch(context);
+    }else {
+      alertDialog("Failed to generate pin");
+    }
+  }
 }

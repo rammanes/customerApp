@@ -31,12 +31,8 @@ class GeneralTopBar extends StatelessWidget implements PreferredSizeWidget {
     width: 40,
     decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: appTextColorSecondary,
-          )
-        ]
     ),
+    child: Image.asset("assets/images/beard.png"),
   );
 
   @override

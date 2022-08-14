@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:klik/main/extensions/NumExtension.dart';
 import 'package:klik/main/extensions/WidgetExtension.dart';
+import 'package:klik/main/models/pinModel.dart';
 import 'package:klik/main/utils/AppColors.dart';
 
 import '../main/utils/AppWidget.dart';
@@ -9,7 +10,8 @@ import '../main/utils/AppWidget.dart';
 
 
 class KAPinGeneratedScreen extends StatelessWidget {
-  const KAPinGeneratedScreen({Key? key}) : super(key: key);
+  final List<Pin> getPinList;
+  KAPinGeneratedScreen({Key? key, required  this.getPinList}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +23,6 @@ class KAPinGeneratedScreen extends StatelessWidget {
                   children: [
                     buildPinGeneratedTop(),
                     25.height,
-                    buildPinSuccessRows(),
-                    10.height,
-                    buildPinSuccessRows(),
-                    10.height,
                     buildPinSuccessRows(),
                   ],
                 )),
@@ -46,17 +44,22 @@ class KAPinGeneratedScreen extends StatelessWidget {
   
   Widget buildPinSuccessRows() => Container(
     padding: const EdgeInsets.only(left: 25, right: 25),
-    child: Row(
-      children: [
-        Image.asset('assets/images/icons/pinButtonIcon.png', height: 30, width: 30,),
-        15.width,
-        const  Text("5555xbnkdisnsflnfg", textAlign: TextAlign.center, style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w500,
-            color: appLandingScreen
-        ),)
-      ],
-    ),
+    child: ListView.builder(
+      shrinkWrap: true,
+      itemCount: getPinList.length,
+      itemBuilder: (context, index){
+        return Row(
+          children: [
+            Image.asset('assets/images/icons/pinButtonIcon.png', height: 30, width: 30,),
+            15.width,
+            Text(getPinList[index].pin.toString(), textAlign: TextAlign.center, style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+                color: appLandingScreen
+            ),)
+          ],
+        );
+      })
   );
 
   Widget  buildCloseButton(BuildContext context) =>  Container(

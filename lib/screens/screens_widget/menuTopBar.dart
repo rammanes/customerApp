@@ -27,12 +27,8 @@ class MenuTopBar extends StatelessWidget implements PreferredSizeWidget {
     width: 60,
     decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        boxShadow: const [
-          BoxShadow(
-            color: appTextColorSecondary,
-          )
-        ]
     ),
+    child: Image.asset('assets/images/beard.png'),
   );
 
   @override

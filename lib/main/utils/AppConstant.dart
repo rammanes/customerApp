@@ -15,5 +15,7 @@ const changePin = "Change card pin";
 const setTransLimit = "Set a transaction limit";
 const mgdCreditCard = "Manage credit card";
 const successText = "Successful";
+const mainBaseUrl = "https://live-wavu.herokuapp.com";
+const testBaseUrl = "https://wavu-endpoint.herokuapp.com";
 
 

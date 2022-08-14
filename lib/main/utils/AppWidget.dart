@@ -104,7 +104,7 @@ Widget shadowPasswordField(TextEditingController _controller, String labelText, 
         ),
         suffixIcon: GestureDetector(
           onTap: onTap(),
-          child: Icon(showPassword ? Icons.visibility : Icons.visibility_off, size: 20, color: Colors.black54,),
+          child: Icon(showPassword ? Icons.visibility_off : Icons.visibility, size: 20, color: Colors.black54,),
         )
       ),
     ),
